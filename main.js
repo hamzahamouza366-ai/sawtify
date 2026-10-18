@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, session, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -55,6 +55,52 @@ ipcMain.handle('sawtify:openExternal', (_event, url) => {
   } catch { /* لا شيء */ }
   return false;
 });
+
+/* ============ بروكسي (لتجاوز حجب googlevideo على بعض الشبكات) ============ */
+const PROXY_CONF = () => path.join(app.getPath('userData'), 'proxy.json');
+
+function applyProxySync(rules) {
+  // rules: نص مثل "http://127.0.0.1:7890" أو "socks5://127.0.0.1:1080" أو "" لإلغاء
+  const cfg = rules ? { proxyRules: String(rules).trim(), proxyBypassRules: 'localhost;127.0.0.1' } : {};
+  return session.defaultSession.setProxy(cfg).then(() => true).catch(() => false);
+}
+
+// تُطبَّق البروكسي المحفوظ عند الإقلاع قبل إنشاء النافذة
+function loadSavedProxy() {
+  try {
+    if (fs.existsSync(PROXY_CONF())) {
+      const j = JSON.parse(fs.readFileSync(PROXY_CONF(), 'utf8'));
+      if (j && j.rules) return j.rules;
+    }
+  } catch { /* تجاهل */ }
+  return '';
+}
+
+ipcMain.handle('sawtify:setProxy', async (_event, rules) => {
+  const clean = String(rules || '').trim();
+  if (clean && !/^(https?|socks4|socks5):\/\/[^\s]+$/i.test(clean)) {
+    return { ok: false, error: 'صيغة غير صالحة — استخدم http:// أو socks5:// متبوعاً بالعنوان والمنفذ' };
+  }
+  const ok = await applyProxySync(clean);
+  if (!ok) return { ok: false, error: 'تعذّر تطبيق البروكسي' };
+  try {
+    if (clean) fs.writeFileSync(PROXY_CONF(), JSON.stringify({ rules: clean }), 'utf8');
+    else if (fs.existsSync(PROXY_CONF())) fs.unlinkSync(PROXY_CONF());
+  } catch { /* تجاهل */ }
+  const test = await testProxy();
+  return { ok: true, rules: clean, test };
+});
+
+/* اختبار سريع: هل صار الوصول إلى مسار يوتيوب يعمل بعد تطبيق البروكسي؟ */
+function testProxy() {
+  return new Promise((resolve) => {
+    const req = net.request({ method: 'GET', url: 'https://www.youtube.com/generate_204' });
+    req.on('response', (res) => resolve({ ok: res.statusCode >= 200 && res.statusCode < 400, status: res.statusCode }));
+    req.on('error', () => resolve({ ok: false, status: 0 }));
+    setTimeout(() => { try { req.abort(); } catch { /* تجاهل */ } resolve({ ok: false, status: -1 }); }, 8000);
+    req.end();
+  });
+}
 
 /* ============ جلب JSON مع إعادة محاولة (للشبكات المتقطعة) ============ */
 async function fetchJson(url, headers, tries = 2) {
@@ -439,8 +485,11 @@ if (process.argv.includes('--smoke-ui')) {
 } else if (process.argv.includes('--smoke')) {
   app.whenReady().then(runSmokeTest);
 } else {
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     app.setAppUserModelId('com.sawtify.desktop');
+    // طبّق البروكسي المحفوظ قبل إنشاء النافذة (يوجّه كل الاتصال بما فيه صوت يوتيوب)
+    const savedProxy = loadSavedProxy();
+    if (savedProxy) await applyProxySync(savedProxy);
     createWindow();
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();

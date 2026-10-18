@@ -525,7 +525,20 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 #jamendoId:focus { border-color: var(--green); }
 
-.hint { color: var(--muted); font-size: 12.5px; line-height: 1.8; margin-top: 10px; }
+.proxy-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+#proxyInput {
+  flex: 1;
+  background: #242424;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13.5px; font-family: inherit;
+  padding: 10px 12px; outline: none;
+  direction: ltr; text-align: left;
+}
+#proxyInput:focus { border-color: var(--green); }
+#proxyClear { width: 34px; height: 34px; }
+#proxyStatus { margin-top: 6px; }
 
 .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
 

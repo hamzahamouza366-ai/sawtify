@@ -126,6 +126,17 @@
 
         <hr class="sep">
 
+        <div class="field-label">بروكسي (اختياري) <span class="opt">— لتجاوز حجب يوتيوب</span></div>
+        <p class="hint">إن كان لديك بروكسي أو VPN (مثال: <code>http://127.0.0.1:7890</code> أو <code>socks5://127.0.0.1:1080</code>)، يُوجَّه كل الاتصال (بما فيه صوت يوتيوب) من خلاله. اتركه فارغاً للاستخدام المباشر.</p>
+        <div class="proxy-row">
+          <input id="proxyInput" type="text" placeholder="http://127.0.0.1:7890  أو  socks5://…" spellcheck="false" autocomplete="off">
+          <button id="proxyApply" class="btn-primary">تطبيق</button>
+          <button id="proxyClear" class="icon-btn" title="مسح البروكسي">✕</button>
+        </div>
+        <p id="proxyStatus" class="hint"></p>
+
+        <hr class="sep">
+
         <div class="about">
           <p><strong>المصدر:</strong> Audius — موسيقى مجانية قانونياً، تعمل بدون أي تسجيل أو حساب.</p>
           <p class="hint">لا تسجيل دخول، لا إعلانات، لا تتبع. تُحفظ كل إعداداتك محلياً على جهازك فقط.</p>

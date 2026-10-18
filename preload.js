@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('sawtify', {
   searchItunes: (query) => ipcRenderer.invoke('sawtify:itunes', query),
   searchDeezer: (query) => ipcRenderer.invoke('sawtify:deezer', query),
   searchOpenverse: (query) => ipcRenderer.invoke('sawtify:openverse', query),
-  openExternal: (url) => ipcRenderer.invoke('sawtify:openExternal', url)
+  openExternal: (url) => ipcRenderer.invoke('sawtify:openExternal', url),
+  setProxy: (rules) => ipcRenderer.invoke('sawtify:setProxy', rules)
 });

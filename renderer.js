@@ -1146,6 +1146,48 @@ els.modal.addEventListener('click', (e) => { if (e.target === els.modal) closeMo
 
 /* (أُزيل حقل Jamendo من الإعدادات — التطبيق يعمل كاملاً عبر Audius بدون أي تسجيل) */
 
+/* ==================== بروكسي (لتجاوز حجب يوتيوب) ==================== */
+const proxyInput = $('#proxyInput');
+const proxyApply = $('#proxyApply');
+const proxyClear = $('#proxyClear');
+const proxyStatus = $('#proxyStatus');
+
+async function loadProxySetting() {
+  const saved = localStorage.getItem('sawtify_proxy') || '';
+  if (proxyInput) proxyInput.value = saved;
+  if (window.sawtify && window.sawtify.setProxy) {
+    const r = await window.sawtify.setProxy(saved);
+    if (saved && proxyStatus) {
+      proxyStatus.textContent = r && r.ok
+        ? (r.test && r.test.ok ? '✔ البروكسي يعمل (HTTP ' + r.test.status + ')' : '⚠ تطبيق البروكسي… جرّب تشغيل يوتيوب')
+        : '✗ ' + ((r && r.error) || 'تعذّر تطبيق البروكسي');
+    }
+  }
+}
+
+if (proxyApply) proxyApply.addEventListener('click', async () => {
+  const val = (proxyInput.value || '').trim();
+  localStorage.setItem('sawtify_proxy', val);
+  if (proxyStatus) proxyStatus.textContent = 'جاري التطبيق…';
+  const r = await window.sawtify.setProxy(val);
+  if (r && r.ok) {
+    proxyStatus.textContent = val
+      ? (r.test && r.test.ok ? '✔ البروكسي يعمل — YouTube سيستخدمه' : '✔ تم التطبيق — جرّب YouTube')
+      : '✔ أُلغِي البروكسي — استخدام مباشر';
+  } else {
+    proxyStatus.textContent = '✗ ' + ((r && r.error) || 'تعذّر تطبيق البروكسي');
+  }
+});
+if (proxyClear) proxyClear.addEventListener('click', async () => {
+  proxyInput.value = '';
+  localStorage.removeItem('sawtify_proxy');
+  const r = await window.sawtify.setProxy('');
+  if (proxyStatus) proxyStatus.textContent = '✔ أُلغِي البروكسي';
+});
+
+// تطبيق البروكسي المحفوظ عند الإقلاع
+loadProxySetting().catch(() => { /* تجاهل */ });
+
 /* ==================== اختصارات لوحة المفاتيح ==================== */
 document.addEventListener('keydown', (e) => {
   const tag = document.activeElement ? document.activeElement.tagName : '';
@@ -1286,8 +1328,72 @@ function onYtError(e) {
   syncPlayUI();
   __ytDiag.push('E' + (e && e.data));
   console.log('YT_ERR code=' + (e && e.data) + ' «' + cur.title + '»'); // تشخيص
-  toast('تعذّر تشغيل «' + cur.title + '» (' + ytErrReason(e && e.data) + ') — أنتقل للتالي…');
-  advancePastBlocked();
+  // بدل التخطي مباشرةً، نحاول إيجاد نسخة عاملة من الأغنية نفسها من مصادر أخرى
+  toast('تعذّر يوتيوب على هذا الاتصال — أبحث عن نسخة عاملة…');
+  trySubstitute(cur).then((ok) => {
+    if (!ok) {
+      toast('تعذّر تشغيل «' + cur.title + '» (' + ytErrReason(e && e.data) + ') — أنتقل للتالي…');
+      advancePastBlocked();
+    }
+  });
+}
+
+/* تنظيف العنوان من الوسوم ليصلح للبحث في مصادر أخرى */
+function cleanYtTitle(s) {
+  return String(s || '')
+    .replace(/\(.*?\)|\[.*?\]/g, ' ') // أقواس: (Official Video) [4K]
+    .replace(/official\s*(video|audio|music|lyric(?:s)?)|mv|4k|8k|hd|lyrics?|audio\s*only|visualizer|remaster(?:ed)?/gi, ' ')
+    .replace(/[-–—|·•]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function scoreMatch(needle, title, artist) {
+  const hay = (String(title) + ' ' + String(artist)).toLowerCase();
+  const words = String(needle).toLowerCase().split(/\s+/).filter((w) => w.length > 1);
+  if (!words.length) return 0;
+  let hit = 0;
+  for (const w of words) if (hay.includes(w)) hit++;
+  return hit / words.length;
+}
+
+/* يبحث في المصادر العاملة (Audius/الأرشيف/Openverse) عن نسخة قابلة للتشغيل من الأغنية */
+async function trySubstitute(t) {
+  if (t.__subbed) return false;
+  t.__subbed = true; // منع تكرار البحث لنفس المقطع
+  const q = (cleanYtTitle(t.title) + ' ' + t.artist).trim().slice(0, 80) || t.title;
+  const settled = await Promise.allSettled([
+    audius('/v1/tracks/search?limit=8&query=' + encodeURIComponent(q)),
+    previewSearch('searchOpenverse', q, 'openverse'),
+    archiveSearch(q)
+  ]);
+  const get = (i) => (settled[i] && settled[i].status === 'fulfilled') ? settled[i].value : [];
+  const cands = [
+    ...get(0).map(normAudius),
+    ...get(1),
+    ...get(2)
+  ];
+  if (!cands.length) return false;
+  // أفضل تطابق حسب العنوان والفنان
+  let best = null, bestScore = 0;
+  for (const c of cands) {
+    const s = scoreMatch(cleanYtTitle(t.title) + ' ' + t.artist, c.title, c.artist);
+    if (s > bestScore) { bestScore = s; best = c; }
+  }
+  if (!best || bestScore < 0.4) return false;
+  // استبدال مقطع يوتيوب المحظور بالنسخة العاملة في القائمة
+  const idx = state.queue.indexOf(t);
+  const wasCurrent = idx === state.index;
+  best.__subFrom = t.title;
+  if (idx >= 0) state.queue[idx] = best; else state.queue[state.index] = best;
+  if (wasCurrent) {
+    __ytDiag.push('SUB_' + best.source);
+    toast('شغّلت النسخة العاملة من ' + (best.source === 'audius' ? 'Audius' : best.source === 'openverse' ? 'الموسيقى الحرة' : 'الأرشيف') + ' ✓');
+    await loadCurrent();
+    renderQueue();
+    refreshRowHighlights();
+  }
+  return true;
 }
 
 function advancePastBlocked() {
