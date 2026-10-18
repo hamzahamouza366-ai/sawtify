@@ -70,6 +70,7 @@ a:hover { text-decoration: underline; }
   padding: 18px 12px;
   gap: 6px;
   border-left: 1px solid var(--line);
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -108,7 +109,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* ============ المحتوى ============ */
-.main { grid-area: main; display: flex; flex-direction: column; background: var(--main); min-width: 0; }
+.main { grid-area: main; display: flex; flex-direction: column; background: var(--main); min-width: 0; min-height: 0; overflow: hidden; }
 
 .topbar {
   display: flex; align-items: center; gap: 16px;
@@ -152,6 +153,7 @@ a:hover { text-decoration: underline; }
 
 .view {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 4px 24px 36px;
   outline: none;
@@ -465,7 +467,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 .queue-head h3 { font-size: 15px; font-weight: 800; }
 
-.queue-list { overflow-y: auto; padding: 8px; }
+.queue-list { overflow-y: auto; min-height: 0; padding: 8px; }
 .q-item {
   display: grid; grid-template-columns: 26px 1fr auto;
   gap: 10px; align-items: center;
