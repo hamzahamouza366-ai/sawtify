@@ -1,12 +1,14 @@
 {
   "name": "spotify-desktop",
   "version": "1.0.0",
-  "description": "تطبيق موسيقى يشبه سبوتيفاي — بدون تسجيل دخول وبدون إعلانات (مصادر قانونية: Audius + Jamendo)",
+  "description": "تطبيق موسيقى يشبه سبوتيفاي — بدون تسجيل دخول وبدون إعلانات (7 مصادر قانونية: Audius + أرشيف الإنترنت + Openverse + YouTube + Apple Music + Deezer + إذاعات)",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "smoke": "electron . --smoke",
-    "dist": "electron-builder --win"
+    "smoke-ui": "electron . --smoke-ui",
+    "dist": "electron-builder --win",
+    "git:sync": "powershell -NoProfile -ExecutionPolicy Bypass -File git-sync.ps1"
   },
   "build": {
     "appId": "com.sawtify.desktop",
