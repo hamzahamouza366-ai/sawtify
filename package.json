@@ -1,0 +1,55 @@
+{
+  "name": "spotify-desktop",
+  "version": "1.0.0",
+  "description": "تطبيق موسيقى يشبه سبوتيفاي — بدون تسجيل دخول وبدون إعلانات (مصادر قانونية: Audius + Jamendo)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.sawtify.desktop",
+    "productName": "Sawtify",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "renderer.js",
+      "app.ico",
+      "app.png"
+    ],
+    "win": {
+      "icon": "app.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "صوتي",
+      "artifactName": "Sawtify-Setup-${version}.exe"
+    }
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Sawtify",
+    "email": "sawtify@local"
+  },
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "^26.15.3"
+  }
+}

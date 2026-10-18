@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: http: data: blob: file:; script-src 'self' https://www.youtube.com https://s.ytimg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src * data: blob:; media-src * file:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src *;">
+  <title>صَوْتي — مشغل الموسيقى</title>
+  <link rel="icon" href="app.ico" type="image/x-icon">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- الشريط الجانبي -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-logo">♪</span>
+        <span class="brand-name">صَوْتي</span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" data-page="home">
+          <span class="nav-ic" data-ic="home"></span><span>الرئيسية</span>
+        </button>
+        <button class="nav-btn" data-page="search">
+          <span class="nav-ic" data-ic="search"></span><span>البحث</span>
+        </button>
+        <button class="nav-btn" data-page="liked">
+          <span class="nav-ic" data-ic="heart"></span><span>أغنياتي المفضلة</span>
+        </button>
+        <button class="nav-btn" data-page="recent">
+          <span class="nav-ic" data-ic="clock"></span><span>آخر ما استمعت</span>
+        </button>
+        <button class="nav-btn" data-page="downloads">
+          <span class="nav-ic" data-ic="download"></span><span>التنزيلات</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="nav-btn" id="queueToggle">
+          <span class="nav-ic" data-ic="queue"></span><span>قائمة التشغيل</span>
+        </button>
+        <button class="nav-btn" id="settingsBtn">
+          <span class="nav-ic" data-ic="settings"></span><span>الإعدادات</span>
+        </button>
+        <div class="badge-free">بدون حساب · بدون إعلانات</div>
+      </div>
+    </aside>
+
+    <!-- المحتوى -->
+    <main class="main">
+      <header class="topbar">
+        <div class="search-wrap">
+          <span class="search-ic" data-ic="search"></span>
+          <input id="searchInput" type="search" placeholder="ابحث عن أغنية أو فنان…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="topbar-actions">
+          <span class="source-pill" title="مصدر الموسيقى المجاني">🎧 Audius</span>
+        </div>
+      </header>
+
+      <div id="view" class="view" tabindex="-1"></div>
+    </main>
+
+    <!-- لوحة قائمة التشغيل -->
+    <section id="queuePanel" class="queue-panel" hidden>
+      <div class="queue-head">
+        <h3>قائمة التشغيل</h3>
+        <button id="queueClose" class="icon-btn" data-ic="close" title="إغلاق"></button>
+      </div>
+      <div id="queueList" class="queue-list"></div>
+    </section>
+
+    <!-- شريط المشغل -->
+    <footer class="player">
+      <div class="np">
+        <img id="npArt" class="np-art" alt="" hidden>
+        <div class="np-art np-fallback" id="npFallback"><span data-ic="note"></span></div>
+        <div class="np-text">
+          <span id="npTitle">مرحباً بك 👋</span>
+          <span id="npArtist">اختر أغنية للبدء</span>
+        </div>
+        <button id="likeBtn" class="icon-btn" data-ic="heartOutline" title="إضافة إلى المفضلة"></button>
+        <button id="dlBtn" class="icon-btn" data-ic="download" title="تنزيل للأوفلاين"></button>
+        <button id="ytOpenBtn" class="icon-btn" data-ic="open" hidden title="فتح على يوتيوب في المتصفح"></button>
+      </div>
+
+      <div class="player-mid" dir="ltr">
+        <div class="p-controls">
+          <button id="shuffleBtn" class="icon-btn" data-ic="shuffle" title="ترتيب عشوائي"></button>
+          <button id="prevBtn" class="icon-btn" data-ic="prev" title="السابق"></button>
+          <button id="playBtn" class="play-btn" title="تشغيل / إيقاف"></button>
+          <button id="nextBtn" class="icon-btn" data-ic="next" title="التالي"></button>
+          <button id="repeatBtn" class="icon-btn" data-ic="repeat" title="التكرار"></button>
+        </div>
+        <div class="p-progress">
+          <span id="curTime" class="time">0:00</span>
+          <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1" aria-label="موضع التشغيل">
+          <span id="durTime" class="time">0:00</span>
+        </div>
+      </div>
+
+      <div class="p-right" dir="ltr">
+        <button id="muteBtn" class="icon-btn" data-ic="volume" title="كتم الصوت"></button>
+        <input id="volumeBar" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="مستوى الصوت">
+      </div>
+    </footer>
+  </div>
+
+  <!-- نافذة الإعدادات -->
+  <div id="modal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle">الإعدادات</h2>
+        <button id="modalClose" class="icon-btn" data-ic="close" title="إغلاق"></button>
+      </div>
+      <div class="modal-body">
+        <div class="field-label">المظهر <span class="opt">— لون التمييز</span></div>
+        <div class="themes" id="themes">
+          <button class="swatch" data-theme="spotify" style="--sw:#1db954" title="أخضر سبوتيفاي"></button>
+          <button class="swatch" data-theme="blue" style="--sw:#3b82f6" title="أزرق"></button>
+          <button class="swatch" data-theme="purple" style="--sw:#a855f7" title="بنفسجي"></button>
+          <button class="swatch" data-theme="pink" style="--sw:#ec4899" title="وردي"></button>
+          <button class="swatch" data-theme="orange" style="--sw:#f97316" title="برتقالي"></button>
+          <button class="swatch" data-theme="red" style="--sw:#ef4444" title="أحمر"></button>
+          <button class="swatch" data-theme="teal" style="--sw:#14b8a6" title="تركوازي"></button>
+        </div>
+
+        <hr class="sep">
+
+        <div class="about">
+          <p><strong>المصدر:</strong> Audius — موسيقى مجانية قانونياً، تعمل بدون أي تسجيل أو حساب.</p>
+          <p class="hint">لا تسجيل دخول، لا إعلانات، لا تتبع. تُحفظ كل إعداداتك محلياً على جهازك فقط.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مشغل يوتيوب في وضع الصوت فقط (مخفي — الصوت فقط بدون فيديو) -->
+  <div id="ytStage" aria-hidden="true"><div id="ytHost"></div></div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
