@@ -240,14 +240,25 @@ ipcMain.handle('sawtify:ytsearch', async (_event, query) => {
   try {
     const q = String(query || '').trim();
     if (!q) return [];
-    const url = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '&hl=ar';
+    const url = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '&hl=ar&gl=AR';
     const res = await fetch(url, {
       redirect: 'follow',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Accept-Language': 'ar,en;q=0.9',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Cookie': 'SOCS=CAI' // يمنع صفحة الموافقة وحلقات إعادة التوجيه
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ar-DZ,ar;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': 'https://www.youtube.com/',
+        'Origin': 'https://www.youtube.com',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-User': '?1',
+        'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Cookie': 'SOCS=CAI; PREF=tz=Asia.Algiers; CONSENT=YES+cb; VISITOR_INFO1_LIVE=; YSC=',
+        'Cache-Control': 'max-age=0',
+        'Upgrade-Insecure-Requests': '1'
       }
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
